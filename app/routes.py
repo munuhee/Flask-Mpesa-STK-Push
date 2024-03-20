@@ -7,8 +7,8 @@ from flask import render_template, request, url_for
 from app import app, db
 
 base_url = 'https://sandbox.safaricom.co.ke/mpesa'
-consumer_key = 'your_consumer_key'
-consumer_secret = 'your_consumer_secret'
+consumer_key = 'CIsPJOblN3jBHZjrvGdY9rxM7ti8D4aW9zcH3ctucLRrBCY9'
+consumer_secret = 'yjD8GDfaZLKytGyfCRs7dwQvZvUAaKKscne67EutcmGR1KxCig63eGPcxXZN6AVw'
 
 def get_access_token():
     """
@@ -18,25 +18,49 @@ def get_access_token():
         str: Access token.
     """
     endpoint = 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
-    response = requests.get(endpoint, auth=HTTPBasicAuth(consumer_key, consumer_secret), timeout=10)
-    data = response.json()
-    return data.get('access_token')
+    try:
+        response = requests.request("GET", endpoint, auth=HTTPBasicAuth(consumer_key, consumer_secret), timeout=10)
+        response.raise_for_status()  # Raises an error for unsuccessful requests
+        data = response.json()
+        return data.get('access_token')
+    except requests.exceptions.RequestException as e:
+        # Handle request exceptions (e.g., connection error, timeout)
+        print("Request failed:", e)
+        return None
+    except ValueError as e:
+        # Handle JSON decoding error
+        print("JSON decoding failed:", e)
+        return None
 
-def initiate_mpesa_stk_push(phone_number, amount):
+@app.route('/home')
+def home():
+    """
+    Route for testing purposes.
+    """
+    get_access_token()
+    return 'Hello from Steve'
+
+# Initiate MPESA Express Request
+@app.route('/pay')
+def initiate_mpesa_stk_push():
     """
     Initiates an M-Pesa STK push transaction.
-
-    Args:
-        phone_number (str): Phone number of the payer.
-        amount (str): Amount to be transacted.
 
     Returns:
         dict: JSON response of the transaction initiation.
     """
+    amount = request.args.get('amount')
+    phone = request.args.get('phone')
+    if not phone or not amount:
+        return "Phone number and amount are required", 400  # Return a 400 Bad Request if phone or amount is missing
+
     endpoint = f"{base_url}/stkpush/v1/processrequest"
     access_token = get_access_token()
+    if access_token is None:
+        return "Failed to fetch access token", 500  # Return a 500 Internal Server Error if access token retrieval fails
+
     headers = {"Authorization": f"Bearer {access_token}"}
-    my_endpoint = f"{base_url}/lnmo"
+    my_endpoint = "https://2ec9-102-135-168-102.ngrok-free.app/"  # Replace with your ngrok endpoint
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     password = f"174379{consumer_secret}{timestamp}"
     password_bytes = base64.b64encode(password.encode('utf-8'))
@@ -45,70 +69,33 @@ def initiate_mpesa_stk_push(phone_number, amount):
         "Password": password_bytes.decode('utf-8'),
         "Timestamp": timestamp,
         "TransactionType": "CustomerPayBillOnline",
-        "PartyA": phone_number,
+        "PartyA": phone,
         "PartyB": "174379",
-        "PhoneNumber": phone_number,
-        "CallBackURL": my_endpoint,
+        "PhoneNumber": phone,
+        "CallBackURL": my_endpoint + "/lnmo-callback",
         "AccountReference": "TestPay",
         "TransactionDesc": "HelloTest",
         "Amount": amount
     }
-    response = requests.post(endpoint, json=data, headers=headers)
-    return response.json()
+    response = requests.request("POST", endpoint, json=data, headers=headers)
+    print("Response Content:", response.content)
+    try:
+        response.raise_for_status()  # Raise an error for unsuccessful responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        # Handle request exceptions (e.g., connection error, timeout)
+        print("Request failed:", e)
+        return "Failed to initiate STK push", 500
+    except ValueError as e:
+        # Handle JSON decoding error
+        print("JSON decoding failed:", e)
+        return "Failed to parse response JSON", 500
 
-@app.route('/')
-def home():
+@app.route('/lnmo-callback', methods=['POST'])
+def incoming():
     """
-    Home route.
-
-    Returns:
-        str: Hello World message.
+    Callback endpoint for M-Pesa transaction updates.
     """
-    return 'Hello World!'
-
-@app.route('/lnmo', methods=['POST'])
-def lnmo_result():
-    """
-    Callback route to handle LNMO result.
-
-    Returns:
-        str: Response indicating the LNMO result is processed.
-    """
-    data = request.get_data()
-    # Process the LNMO result
-    return "LNMO Result Processed"
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    """
-    Index route for initiating payments.
-
-    Returns:
-        str: Rendered HTML template for payment initiation.
-    """
-    if request.method == 'POST':
-        phone_number = request.form.get('phone_number')
-        amount = request.form.get('amount')
-        name = request.form.get('name')
-
-        if not (phone_number and amount):
-            return "Phone number and amount are required"
-
-        # Initiate M-Pesa STK push
-        mpesa_response = initiate_mpesa_stk_push(phone_number, amount)
-        # Handle response as per your requirements
-        # Avoid printing sensitive information like mpesa_response
-        return "Payment initiated successfully"
-
-    return render_template('create.html')
-
-@app.route('/records', methods=['GET'])
-def records():
-    """
-    Route to display transaction records.
-
-    Returns:
-        str: Rendered HTML template for displaying transaction records.
-    """
-    all_transactions = Transaction.query.all()
-    return render_template('records.html', transactions=all_transactions
+    data = request.get_json()
+    print(data)
+    return "OK"  # Make sure to return a string here, 'ok' should be 'OK'
