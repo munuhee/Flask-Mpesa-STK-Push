@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-Pesa STK Push</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-600 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <a href="#" class="text-white text-2xl font-semibold">M-Pesa STK Push</a>
+            </div>
+            <button class="block lg:hidden text-white focus:outline-none">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+            <div class="hidden lg:flex space-x-4 items-center">
+                <a href="{{ url_for('view_records') }}" class="text-white flex items-center space-x-1">
+                    <span>Home</span>
+                </a>
+                <a href="{{ url_for('view_records') }}" class="text-white flex items-center space-x-1">
+                    <span>Records</span>
+                </a>
+                <a href="#" class="text-white flex items-center space-x-1">
+                    <span>Contact</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container mx-auto p-4">
+        <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold mb-4">Make Payment</h2>
+            <form method="POST" action="{{ url_for('initiate_mpesa_stk_push') }}" class="form-group" id="payment-form">
+                {{ form.hidden_tag() }}
+                {{ form.csrf_token }}
+                <div class="mb-4">
+                    <label for="name" class="block text-gray-700">Full Name:</label>
+                    {{ form.full_name(class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500") }}
+                </div>
+                <div class="mb-4">
+                    <label for="phone" class="block text-gray-700">Phone Number:</label>
+                    {{ form.phone_number(class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500") }}
+                </div>
+                <div class="mb-4">
+                    <label for="amount" class="block text-gray-700">Amount:</label>
+                    {{ form.amount(class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500") }}
+                </div>
+                <div class="mb-4">
+                    <label for="account_reference" class="block text-gray-700">Account Reference:</label>
+                    {{ form.reference(class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500") }}
+                </div>
+                {{ form.submit(class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center justify-center hover:bg-blue-500", onclick="submitForm(event)") }}
+            </form>
+        </div>
+    </div>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function submitForm(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Submit form via AJAX
+            $.ajax({
+                type: 'POST',
+                url: $('#payment-form').attr('action'),
+                data: $('#payment-form').serialize(),
+                success: function(response) {
+                    // Show success message using SweetAlert
+                    swal("Success!", response.ResponseDescription, "success");
+                },
+                error: function(xhr, status, error) {
+                    // Show error message using SweetAlert
+                    swal("Error!", xhr.responseJSON.error, "error");
+                }
+            });
+        }
+    </script>
+</body>
+</html>
