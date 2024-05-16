@@ -58,6 +58,25 @@ Before you begin, ensure you have the following:
        call setenv.bat
        ```
 
+## Database Migration
+
+To manage database migrations, follow these steps:
+
+1. Initialize the migration environment:
+   ```bash
+   flask db init
+   ```
+
+2. Create an initial migration:
+   ```bash
+   flask db migrate -m "Initial migration"
+   ```
+
+3. Apply the migration to the database:
+   ```bash
+   flask db upgrade
+   ```
+
 ## Usage
 
 ### Endpoints
