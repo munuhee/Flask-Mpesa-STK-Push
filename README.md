@@ -1,6 +1,6 @@
 # Flask M-Pesa Integration
 
-![Flask M-Pesa Integration](https://res.cloudinary.com/murste/image/upload/v1713944812/icons/daraja_geyyh9.png)
+<img src="https://res.cloudinary.com/murste/image/upload/v1713944812/icons/daraja_geyyh9.png" width="150" />
 
 This application allows you to seamlessly integrate M-Pesa functionalities into your Flask application. It enables features like initiating STK push requests.
 
