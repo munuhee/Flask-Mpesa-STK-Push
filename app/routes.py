@@ -1,4 +1,4 @@
-"""Endpoints for initiating payment and view records."""
+"""Endpoints for merchant initiating payment and view records."""
 from flask import request, jsonify, render_template
 from app import app, db, services, models, forms
 
